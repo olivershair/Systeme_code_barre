@@ -1,0 +1,55 @@
+{% extends 'products/base.html' %}
+
+{% block title %}Importer Excel{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="bi bi-file-earmark-excel"></i> Importer des Produits depuis Excel</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6><i class="bi bi-info-circle"></i> Format du fichier Excel requis:</h6>
+                    <ul class="mb-0">
+                        <li>Colonne 1: <strong>reference</strong></li>
+                        <li>Colonne 2: <strong>nom</strong></li>
+                        <li>Colonne 3: <strong>taille</strong></li>
+                        <li>Colonne 4: <strong>prix</strong></li>
+                    </ul>
+                </div>
+                
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        {{ form.excel_file.label_tag }}
+                        {{ form.excel_file }}
+                        <div class="form-text">{{ form.excel_file.help_text }}</div>
+                        {% if form.excel_file.errors %}
+                            <div class="text-danger">{{ form.excel_file.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-upload"></i> Importer
+                        </button>
+                        <a href="{% url 'product_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                    </div>
+                </form>
+                
+                <hr>
+                
+                <div class="alert alert-warning">
+                    <h6><i class="bi bi-exclamation-triangle"></i> Note importante:</h6>
+                    <p class="mb-0">Les codes-barres seront générés automatiquement pour chaque produit importé.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

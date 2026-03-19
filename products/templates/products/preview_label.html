@@ -1,0 +1,106 @@
+{% extends 'products/base.html' %}
+
+{% block title %}Prévisualisation Étiquette{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0"><i class="bi bi-eye"></i> Prévisualisation de l'Étiquette</h4>
+            </div>
+            <div class="card-body">
+                <div class="label-preview text-center" style="padding: 40px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 10px;">
+                    <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 450px; margin: 0 auto;">
+                        {% if company_settings and company_settings.logo %}
+                            <div class="mb-3" style="height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                <img src="{{ company_settings.logo.url }}" alt="Logo" style="max-height: 100px; max-width: 100%; object-fit: contain;">
+                                <p class="text-muted fst-italic mb-0" style="font-size: 0.7rem; margin-top: 8px;">
+                                    Where beauty evokes confidence
+                                </p>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning small mb-3">
+                                Aucun logo configuré. <a href="{% url 'company_settings' %}">Ajouter un logo</a>
+                            </div>
+                        {% endif %}
+                        
+                        <hr style="border-top: 2px solid #e0e0e0; margin: 20px 0;">
+                        
+                        <div class="text-center mb-4">
+                            <div class="mb-2">
+                                <h5 class="mb-0" style="color: #2c3e50; font-weight: 600;">{{ product.name }}</h5>
+                            </div>
+                            <div class="mb-2">
+                                <span class="text-muted" style="font-size: 0.9rem;">Taille: </span>
+                                <strong style="font-size: 1rem;">{{ product.size }}</strong>
+                            </div>
+                            <div class="mb-2">
+                                <span class="text-muted" style="font-size: 0.9rem;">Prix: </span>
+                                <strong style="color: #27ae60; font-size: 1.1rem;">{{ product.price }} FCFA</strong>
+                            </div>
+                            <div class="mb-2">
+                                <span class="text-muted" style="font-size: 0.9rem;">Réf: </span>
+                                <strong style="font-size: 1rem;">{{ product.reference }}</strong>
+                            </div>
+                        </div>
+                        
+                        {% if product.barcode_image %}
+                            <div class="my-2 p-2" style="background: #f8f9fa; border-radius: 5px;">
+                                <img src="{{ product.barcode_image.url }}" alt="Code-barres" style="max-width: 80%; height: auto; transform: scaleY(0.8) scaleX(1.3);">
+                            </div>
+                        {% endif %}
+                        
+                        {% if company_settings %}
+                            <p class="text-muted small mb-0 mt-2" style="font-size: 0.85rem;">
+                                <i class="bi bi-telephone"></i> {{ company_settings.phone_number_1 }} / {{ company_settings.phone_number_2 }}
+                            </p>
+                        {% else %}
+                            <p class="text-muted small mb-0 mt-2" style="font-size: 0.85rem;">
+                                <i class="bi bi-telephone"></i> 653280942 / 658039370
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-download"></i> Télécharger</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'download_label_pdf' product.pk %}" class="btn btn-danger">
+                        <i class="bi bi-file-pdf"></i> Télécharger PDF
+                    </a>
+                    <a href="{% url 'download_label_image' product.pk %}" class="btn btn-primary">
+                        <i class="bi bi-image"></i> Télécharger Image
+                    </a>
+                    <hr>
+                    <a href="{% url 'product_update' product.pk %}" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Modifier
+                    </a>
+                    <a href="{% url 'product_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Retour à la liste
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">Informations</h6>
+            </div>
+            <div class="card-body">
+                <small class="text-muted">
+                    <p><strong>Créé le:</strong> {{ product.created_at|date:"d/m/Y H:i" }}</p>
+                    <p><strong>Modifié le:</strong> {{ product.updated_at|date:"d/m/Y H:i" }}</p>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

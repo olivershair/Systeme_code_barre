@@ -1,0 +1,219 @@
+{% extends 'products/base.html' %}
+
+{% block title %}Toutes les Étiquettes - Format A4{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-file-earmark-pdf"></i> 
+                        {{ total_products }} Étiquettes - {{ total_pages }} Page(s) A4
+                    </h4>
+                    <div class="btn-group">
+                        <!-- Télécharger toutes les étiquettes -->
+                        <a href="{% url 'download_all_labels_pdf' %}" class="btn btn-success btn-sm">
+                            <i class="bi bi-download"></i> Télécharger Tout ({{ total_pages }} pages)
+                        </a>
+                        
+                        <!-- Sélection personnalisée -->
+                        <a href="{% url 'select_products_for_printing' %}" class="btn btn-info btn-sm ms-1">
+                            <i class="bi bi-check2-square"></i> Sélectionner
+                        </a>
+                        
+                        <a href="{% url 'product_list' %}" class="btn btn-secondary btn-sm ms-1">
+                            <i class="bi bi-arrow-left"></i> Retour
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% for page in pages %}
+                    <!-- Page A4 {{ page.page_number }} -->
+                    <div class="page-container" style="margin-bottom: 30px;">
+                        <div class="page-header text-center mb-2" style="background: #f8f9fa; padding: 10px; border-bottom: 1px solid #ddd;">
+                            <h5 class="mb-0">
+                                Page {{ page.page_number }}/{{ total_pages }} - {{ page.products|length }} étiquettes
+                                <div class="btn-group btn-group-sm ms-3">
+                                    <form method="post" action="{% url 'download_multiple_labels_pdf' %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        {% for product_id in page.product_ids %}
+                                        <input type="hidden" name="product_ids" value="{{ product_id }}">
+                                        {% endfor %}
+                                        <button type="submit" class="btn btn-outline-success btn-sm">
+                                            <i class="bi bi-download"></i> Page {{ page.page_number }}
+                                        </button>
+                                    </form>
+                                </div>
+                            </h5>
+                        </div>
+                        
+                        <!-- Format A4 simulé -->
+                        <div class="a4-container" style="width: 210mm; height: 297mm; margin: 0 auto; background: white; border: 2px solid #ddd; position: relative; overflow: hidden;">
+                            <!-- Grille 3x7 = 21 étiquettes -->
+                            <div class="labels-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(7, 1fr); gap: 2mm; padding: 10mm; height: 100%; box-sizing: border-box;">
+                                {% for product in page.products %}
+                                <div class="label-item" style="border: 1px solid #ccc; border-radius: 6px; padding: 2mm; background: #fefefe; position: relative; display: flex; flex-direction: column; justify-content: space-between; font-size: 8px; overflow: hidden;">
+                                    <!-- Boutons d'action individuels -->
+                                    <div class="label-actions" style="position: absolute; top: 1px; right: 1px; z-index: 10; opacity: 0; transition: opacity 0.2s ease;">
+                                        <a href="{% url 'download_single_label_from_multiple' product.pk %}" 
+                                           class="btn-action download" 
+                                           style="background: rgba(40,167,69,0.9); color: white; border-radius: 2px; padding: 1px 2px; text-decoration: none; font-size: 6px; margin-right: 1px; display: inline-block;"
+                                           title="Télécharger cette étiquette">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                        <a href="{% url 'download_label_pdf' product.pk %}" 
+                                           class="btn-action print" 
+                                           style="background: rgba(0,123,255,0.9); color: white; border-radius: 2px; padding: 1px 2px; text-decoration: none; font-size: 6px; display: inline-block;"
+                                           title="Imprimer cette étiquette" target="_blank">
+                                            <i class="bi bi-printer"></i>
+                                        </a>
+                                    </div>
+                                    
+                                    <div class="label-content">
+                                        <!-- Logo -->
+                                        {% if company_settings.logo %}
+                                        <div class="logo" style="text-align: center; margin-bottom: 1mm;">
+                                            <img src="{{ company_settings.logo.url }}" alt="Logo" style="max-width: 15mm; max-height: 8mm; object-fit: contain;">
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <!-- Slogan -->
+                                        <div class="slogan" style="text-align: center; font-style: italic; color: #666; font-size: 6px; margin-bottom: 2mm;">
+                                            "Where beauty evokes confidence"
+                                        </div>
+                                        
+                                        <!-- Nom du produit -->
+                                        <div class="product-name" style="text-align: center; font-weight: bold; margin-bottom: 1.5mm; font-size: 9px; line-height: 1.1; word-wrap: break-word; overflow-wrap: break-word; hyphens: auto;">
+                                            {{ product.name }}
+                                        </div>
+                                        
+                                        <!-- Taille -->
+                                        <div class="size" style="text-align: center; margin-bottom: 1mm; font-size: 7px;">
+                                            Taille: {{ product.size }}
+                                        </div>
+                                        
+                                        <!-- Prix -->
+                                        <div class="price" style="text-align: center; font-weight: bold; margin-bottom: 1mm; font-size: 8px;">
+                                            Prix: {{ product.price|floatformat:0 }} FCFA
+                                        </div>
+                                        
+                                        <!-- Référence -->
+                                        <div class="reference" style="text-align: center; color: #666; margin-bottom: 1.5mm; font-size: 6px;">
+                                            Réf: {{ product.reference }}
+                                        </div>
+                                        
+                                        <!-- Code-barres -->
+                                        {% if product.barcode_image %}
+                                        <div class="barcode" style="text-align: center; margin-bottom: 1.5mm;">
+                                            <img src="{{ product.barcode_image.url }}" alt="Code-barres" style="max-width: 25mm; height: 6mm; object-fit: contain;">
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <!-- Téléphones -->
+                                        {% if company_settings.phone_number_1 %}
+                                        <div class="phones" style="text-align: center; color: #666; font-size: 6px;">
+                                            {{ company_settings.phone_number_1 }}{% if company_settings.phone_number_2 %}/{{ company_settings.phone_number_2 }}{% endif %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                
+                                <!-- Cases vides pour compléter la grille -->
+                                {% for i in "123456789012345678901"|make_list %}
+                                    {% if forloop.counter0 >= page.products|length and forloop.counter0 < 21 %}
+                                    <div class="label-item empty" style="border: 1px dashed #ddd; border-radius: 6px; background: #f9f9f9; display: flex; align-items: center; justify-content: center; color: #ccc; font-size: 10px;">
+                                        Vide
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Styles pour l'impression */
+@media print {
+    .card-header, .page-header, .label-actions {
+        display: none !important;
+    }
+    
+    .page-container {
+        page-break-after: always;
+        margin-bottom: 0 !important;
+    }
+    
+    .a4-container {
+        width: 210mm !important;
+        height: 297mm !important;
+        margin: 0 !important;
+        border: none !important;
+    }
+    
+    .container-fluid, .card, .card-body {
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+}
+
+/* Styles pour l'écran */
+.a4-container {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.label-item:hover {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transform: scale(1.02);
+    transition: all 0.2s ease;
+}
+
+.label-item:hover .label-actions {
+    opacity: 1;
+}
+
+.btn-action:hover {
+    transform: scale(1.1);
+    opacity: 1 !important;
+}
+
+.btn-action.download:hover {
+    background: rgba(40,167,69,1) !important;
+}
+
+.btn-action.print:hover {
+    background: rgba(0,123,255,1) !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .a4-container {
+        width: 100% !important;
+        height: auto !important;
+        margin: 10px !important;
+    }
+    
+    .labels-grid {
+        padding: 5mm !important;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .btn-group .btn {
+        margin: 0 !important;
+    }
+}
+</style>
+{% endblock %}

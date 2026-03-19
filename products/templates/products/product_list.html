@@ -1,0 +1,61 @@
+{% extends 'products/base.html' %}
+
+{% block title %}Liste des Produits{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-box-seam"></i> Liste des Produits</h2>
+    <a href="{% url 'product_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Nouveau Produit
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Référence</th>
+                        <th>Nom</th>
+                        <th>Taille</th>
+                        <th>Prix</th>
+                        <th>Code-barres</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td><strong>{{ product.reference }}</strong></td>
+                        <td>{{ product.name }}</td>
+                        <td>{{ product.size }}</td>
+                        <td>{{ product.price }} FCFA</td>
+                        <td>
+                            {% if product.barcode_image %}
+                                <img src="{{ product.barcode_image.url }}" alt="Barcode" style="height: 40px;">
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'preview_label' product.pk %}" class="btn btn-sm btn-info" title="Prévisualiser">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'product_update' product.pk %}" class="btn btn-sm btn-warning" title="Modifier">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'product_delete' product.pk %}" class="btn btn-sm btn-danger" title="Supprimer">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">Aucun produit disponible</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

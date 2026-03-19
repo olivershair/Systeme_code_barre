@@ -1,0 +1,88 @@
+{% extends 'products/base.html' %}
+
+{% block title %}Scanner Code-barres{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-camera"></i> Scanner un Code-barres</h4>
+            </div>
+            <div class="card-body">
+                <div id="scanner-container" class="mb-3">
+                    <video id="video" width="100%" autoplay></video>
+                    <canvas id="canvas" style="display:none;"></canvas>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Positionnez le code-barres devant la caméra
+                </div>
+                
+                <form method="post" id="barcode-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="barcode_value" class="form-label">Ou saisir manuellement:</label>
+                        <input type="text" name="barcode_value" id="barcode_value" class="form-control" 
+                               placeholder="Référence du produit">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Rechercher
+                    </button>
+                </form>
+                
+                {% if product %}
+                <div class="alert alert-success mt-4">
+                    <h5>Produit trouvé!</h5>
+                    <p><strong>Nom:</strong> {{ product.name }}</p>
+                    <p><strong>Référence:</strong> {{ product.reference }}</p>
+                    <p><strong>Prix:</strong> {{ product.price }} FCFA</p>
+                    <a href="{% url 'preview_label' product.pk %}" class="btn btn-sm btn-info">
+                        Voir l'étiquette
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    const barcodeInput = document.getElementById('barcode_value');
+    
+    // Démarrer la caméra
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(stream => {
+            video.srcObject = stream;
+            video.play();
+            scanBarcode();
+        })
+        .catch(err => {
+            console.error('Erreur caméra:', err);
+            alert('Impossible d\'accéder à la caméra');
+        });
+    
+    function scanBarcode() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            
+            if (code) {
+                barcodeInput.value = code.data;
+                document.getElementById('barcode-form').submit();
+            }
+        }
+        requestAnimationFrame(scanBarcode);
+    }
+</script>
+{% endblock %}
