@@ -11,19 +11,21 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-this-in-production'
 
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
-
-# Ajout explicite des domaines de production
-production_hosts = [
+# Configuration ALLOWED_HOSTS robuste
+ALLOWED_HOSTS = [
     'systeme-code-barre.onrender.com',
     'localhost',
-    '127.0.0.1'
+    '127.0.0.1',
+    '0.0.0.0',
 ]
 
-for host in production_hosts:
-    if host not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append(host)
+# Ajout des hosts depuis les variables d'environnement si définies
+env_hosts = os.getenv('ALLOWED_HOSTS', '')
+if env_hosts:
+    additional_hosts = [host.strip() for host in env_hosts.split(',') if host.strip()]
+    for host in additional_hosts:
+        if host not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(host)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -98,7 +100,13 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# Ne définir STATICFILES_DIRS que si le dossier existe
+static_dir = BASE_DIR / 'static'
+if static_dir.exists():
+    STATICFILES_DIRS = [static_dir]
+else:
+    STATICFILES_DIRS = []
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -107,6 +115,33 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'product_list'
+
+# Logging configuration pour debug
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}
 
 # Security settings for production
 if not DEBUG:
