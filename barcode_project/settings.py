@@ -76,15 +76,20 @@ DATABASES = {
 
 # Support for DATABASE_URL (useful for production)
 database_url = os.getenv('DATABASE_URL')
+print(f"DEBUG: DATABASE_URL = {database_url[:50] if database_url else 'None'}...")  # Debug info
 if database_url:
     import dj_database_url
     DATABASES['default'] = dj_database_url.parse(database_url)
+    print(f"DEBUG: Using database engine: {DATABASES['default']['ENGINE']}")  # Debug info
     # Configuration spécifique pour PostgreSQL
     if database_url.startswith('postgres'):
         DATABASES['default']['OPTIONS'] = {
             'sslmode': 'require',
         }
         DATABASES['default']['CONN_MAX_AGE'] = 600
+        print("DEBUG: PostgreSQL configuration applied")  # Debug info
+else:
+    print("DEBUG: Using default SQLite database")  # Debug info
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
