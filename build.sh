@@ -1,24 +1,19 @@
 #!/usr/bin/env bash
-# Build script for Render deployment
+set -o errexit
 
-set -o errexit  # exit on error
-
-echo "🚀 Starting build process..."
-
-# Install dependencies
-echo "📦 Installing dependencies..."
+echo "📦 Installation des dépendances..."
 pip install -r requirements.txt
 
-# Check configuration
-echo "🔍 Checking configuration..."
-python check_config.py
-
-# Collect static files
-echo "📁 Collecting static files..."
+echo "📁 Collecte des fichiers statiques..."
 python manage.py collectstatic --noinput
 
-# Setup production (migrations + superuser)
-echo "🔧 Setting up production environment..."
-python manage.py setup_production
+echo "🔧 Application des migrations..."
+python manage.py migrate
 
-echo "✅ Build completed successfully!"
+echo "🏢 Initialisation des paramètres entreprise..."
+python create_company_settings.py
+
+echo "👤 Création du superuser..."
+python manage.py createsuperuser --noinput || true
+
+echo "✅ Build terminé!"
