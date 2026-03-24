@@ -16,4 +16,7 @@ python create_company_settings.py
 echo "👤 Création du superuser..."
 python manage.py createsuperuser --noinput || true
 
+echo "🔄 Régénération des codes-barres..."
+python manage.py regenerate_barcodes || true
+
 echo "✅ Build terminé!"

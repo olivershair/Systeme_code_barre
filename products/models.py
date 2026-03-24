@@ -9,16 +9,32 @@ from django.core.files import File
 class CompanySettings(models.Model):
     """Configuration de l'entreprise"""
     name = models.CharField(max_length=200, verbose_name="Nom de l'entreprise")
-    logo = models.ImageField(upload_to='logos/', verbose_name="Logo")
+    logo = models.ImageField(upload_to='logos/', verbose_name="Logo", blank=True, null=True)
+    logo_data = models.TextField(blank=True, null=True)  # Logo en base64 pour persistance
     phone_number_1 = models.CharField(max_length=20, default="653280942")
     phone_number_2 = models.CharField(max_length=20, default="658039370")
-    
+
     class Meta:
         verbose_name = "Paramètres de l'entreprise"
         verbose_name_plural = "Paramètres de l'entreprise"
-    
+
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.logo:
+            try:
+                import base64
+                self.logo.open('rb')
+                content = self.logo.read()
+                self.logo.close()
+                new_data = base64.b64encode(content).decode('utf-8')
+                if self.logo_data != new_data:
+                    CompanySettings.objects.filter(pk=self.pk).update(logo_data=new_data)
+                    self.logo_data = new_data
+            except Exception:
+                pass
 
 
 class Product(models.Model):

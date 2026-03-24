@@ -169,24 +169,40 @@ class LabelDrawer:
         self.canvas.setLineWidth(width)
         self.canvas.line(x1, y, x2, y)
     
-    def draw_logo(self, logo_path, x, y, max_width, max_height):
-        """Dessine un logo avec gestion d'erreurs"""
+    def draw_logo(self, logo_path, x, y, max_width, max_height, logo_data=None):
+        """Dessine un logo — utilise le base64 en DB si le fichier n'existe pas"""
         try:
-            if os.path.exists(logo_path):
+            if logo_path and os.path.exists(logo_path):
                 self.canvas.drawImage(logo_path, x, y, width=max_width, height=max_height,
+                                     preserveAspectRatio=True, mask='auto')
+                return True
+            if logo_data:
+                import base64 as b64mod
+                logo_io = BytesIO(b64mod.b64decode(logo_data))
+                self.canvas.drawImage(ImageReader(logo_io), x, y, width=max_width, height=max_height,
                                      preserveAspectRatio=True, mask='auto')
                 return True
         except Exception as e:
             logger.warning(f"Erreur chargement logo: {e}")
         return False
     
-    def draw_barcode(self, barcode_path, x, y, width, height):
-        """Dessine un code-barres avec gestion d'erreurs"""
+    def draw_barcode(self, reference, x, y, width, height, barcode_path=None):
+        """Dessine un code-barres — génère en mémoire si le fichier n'existe pas"""
         try:
-            if os.path.exists(barcode_path):
+            if barcode_path and os.path.exists(barcode_path):
                 self.canvas.drawImage(barcode_path, x, y, width=width, height=height,
                                      preserveAspectRatio=True)
                 return True
+            CODE128 = barcode.get_barcode_class('code128')
+            rv = BytesIO()
+            CODE128(reference, writer=ImageWriter()).write(rv, options={
+                'module_width': 0.13, 'module_height': 4.0, 'quiet_zone': 1.5,
+                'font_size': 0, 'text_distance': 0, 'write_text': False,
+            })
+            rv.seek(0)
+            self.canvas.drawImage(ImageReader(rv), x, y, width=width, height=height,
+                                 preserveAspectRatio=True)
+            return True
         except Exception as e:
             logger.warning(f"Erreur chargement code-barres: {e}")
         return False
@@ -219,11 +235,13 @@ def create_label_pdf(product, company_settings, output_path):
         y = y_start - margin - 2
         
         # === LOGO CENTRÉ ===
-        if company_settings and company_settings.logo:
+        if company_settings:
             logo_width = 20 * mm
             logo_height = 10 * mm
             logo_x = x_center - logo_width / 2
-            if drawer.draw_logo(company_settings.logo.path, logo_x, y - logo_height, logo_width, logo_height):
+            logo_path = company_settings.logo.path if company_settings.logo else ''
+            logo_data = getattr(company_settings, 'logo_data', None)
+            if drawer.draw_logo(logo_path, logo_x, y - logo_height, logo_width, logo_height, logo_data=logo_data):
                 y -= logo_height + 3
                 
                 # Slogan
@@ -269,13 +287,12 @@ def create_label_pdf(product, company_settings, output_path):
         y -= 4
         
         # === CODE-BARRES ===
-        if product.barcode_image:
-            barcode_width = 30 * mm
-            barcode_height = 6 * mm
-            barcode_x = x_center - barcode_width / 2
-            
-            if drawer.draw_barcode(product.barcode_image.path, barcode_x, y - barcode_height, barcode_width, barcode_height):
-                y -= barcode_height  # Descendre jusqu'en bas du code-barres
+        barcode_width = 30 * mm
+        barcode_height = 6 * mm
+        barcode_x = x_center - barcode_width / 2
+        barcode_path = product.barcode_image.path if product.barcode_image else None
+        if drawer.draw_barcode(product.reference, barcode_x, y - barcode_height, barcode_width, barcode_height, barcode_path=barcode_path):
+            y -= barcode_height
         
         y -= 8  # Espace supplémentaire après le code-barres
         
@@ -373,21 +390,22 @@ def _draw_label_pdf(c, product, company_settings, x, y, w, h):
         c.drawString(cx - pw / 2, cur_bottom, phone_str)
         cur_bottom += 5 + 1 * mm
 
-    # Code-barres
+    # Code-barres (généré en mémoire, pas besoin de fichier)
     BC_H = 5 * mm
     BC_W = min(22 * mm, w - 2 * PAD)
-    if product.barcode_image:
-        try:
-            if os.path.exists(product.barcode_image.path):
-                c.drawImage(
-                    product.barcode_image.path,
-                    cx - BC_W / 2, cur_bottom,
-                    width=BC_W, height=BC_H,
-                    preserveAspectRatio=True
-                )
-                cur_bottom += BC_H + 1 * mm
-        except Exception:
-            pass
+    try:
+        CODE128 = barcode.get_barcode_class('code128')
+        barcode_io = BytesIO()
+        CODE128(product.reference, writer=ImageWriter()).write(barcode_io, options={
+            'module_width': 0.13, 'module_height': 4.0, 'quiet_zone': 1.5,
+            'font_size': 0, 'text_distance': 0, 'write_text': False,
+        })
+        barcode_io.seek(0)
+        c.drawImage(ImageReader(barcode_io), cx - BC_W / 2, cur_bottom,
+                    width=BC_W, height=BC_H, preserveAspectRatio=True)
+        cur_bottom += BC_H + 1 * mm
+    except Exception:
+        pass
 
     # Référence
     ref_str = f"Réf: {product.reference}"
@@ -418,23 +436,30 @@ def _draw_label_pdf(c, product, company_settings, x, y, w, h):
     # ================================================================
     cur_top = y + h - PAD   # curseur descendant vers le bas
 
-    # Logo
+    # Logo (utilise base64 en DB si le fichier n'existe pas)
     has_logo = False
-    if company_settings and company_settings.logo:
+    if company_settings:
         LOGO_H = 7 * mm
         LOGO_W = 14 * mm
+        logo_img = None
         try:
-            if os.path.exists(company_settings.logo.path):
-                c.drawImage(
-                    company_settings.logo.path,
-                    cx - LOGO_W / 2, cur_top - LOGO_H,
-                    width=LOGO_W, height=LOGO_H,
-                    preserveAspectRatio=True, mask='auto'
-                )
-                has_logo = True
-                cur_top -= LOGO_H + 0.5 * mm
+            if company_settings.logo and os.path.exists(company_settings.logo.path):
+                logo_img = company_settings.logo.path
+            elif getattr(company_settings, 'logo_data', None):
+                import base64 as b64mod
+                logo_io = BytesIO(b64mod.b64decode(company_settings.logo_data))
+                logo_img = ImageReader(logo_io)
         except Exception:
             pass
+        if logo_img:
+            try:
+                c.drawImage(logo_img, cx - LOGO_W / 2, cur_top - LOGO_H,
+                            width=LOGO_W, height=LOGO_H,
+                            preserveAspectRatio=True, mask='auto')
+                has_logo = True
+                cur_top -= LOGO_H + 0.5 * mm
+            except Exception:
+                pass
 
     # Slogan (seulement si logo présent)
     if has_logo:

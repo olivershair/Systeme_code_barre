@@ -32,9 +32,7 @@
                         <td>{{ product.size }}</td>
                         <td>{{ product.price }} FCFA</td>
                         <td>
-                            {% if product.barcode_image %}
-                                <img src="{{ product.barcode_image.url }}" alt="Barcode" style="height: 40px;">
-                            {% endif %}
+                            <img src="{% url 'barcode_serve' product.reference %}" alt="Barcode" style="height: 40px;">
                         </td>
                         <td>
                             <a href="{% url 'preview_label' product.pk %}" class="btn btn-sm btn-info" title="Prévisualiser">

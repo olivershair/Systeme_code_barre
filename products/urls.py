@@ -22,4 +22,6 @@ urlpatterns = [
     path('scan/', views.scan_barcode, name='scan_barcode'),
     path('settings/', views.company_settings_view, name='company_settings'),
     path('api/company-logo/', views.company_logo_api, name='company_logo_api'),
+    path('barcode/<str:reference>/', views.barcode_serve, name='barcode_serve'),
+    path('logo/', views.logo_serve, name='logo_serve'),
 ]

@@ -45,11 +45,9 @@
                             </div>
                         </div>
                         
-                        {% if product.barcode_image %}
-                            <div class="my-2 p-2" style="background: #f8f9fa; border-radius: 5px;">
-                                <img src="{{ product.barcode_image.url }}" alt="Code-barres" style="max-width: 80%; height: auto; transform: scaleY(0.8) scaleX(1.3);">
-                            </div>
-                        {% endif %}
+                        <div class="my-2 p-2" style="background: #f8f9fa; border-radius: 5px;">
+                            <img src="{% url 'barcode_serve' product.reference %}" alt="Code-barres" style="max-width: 80%; height: auto; transform: scaleY(0.8) scaleX(1.3);">
+                        </div>
                         
                         {% if company_settings %}
                             <p class="text-muted small mb-0 mt-2" style="font-size: 0.85rem;">

@@ -18,14 +18,50 @@ def company_logo_api(request):
     """API pour récupérer le logo de l'entreprise"""
     try:
         company_settings = CompanySettings.objects.first()
-        if company_settings and company_settings.logo:
+        if company_settings:
+            logo_url = None
+            if company_settings.logo:
+                try:
+                    import os
+                    if os.path.exists(company_settings.logo.path):
+                        logo_url = company_settings.logo.url
+                except Exception:
+                    pass
+            if not logo_url and company_settings.logo_data:
+                logo_url = f'/logo/'
             return JsonResponse({
-                'logo_url': company_settings.logo.url,
+                'logo_url': logo_url,
                 'company_name': company_settings.name
             })
         return JsonResponse({'logo_url': None})
     except:
         return JsonResponse({'logo_url': None})
+
+
+@login_required
+def barcode_serve(request, reference):
+    """Génère et retourne l'image du code-barres à la volée"""
+    import barcode as barcode_lib
+    from barcode.writer import ImageWriter
+    CODE128 = barcode_lib.get_barcode_class('code128')
+    rv = BytesIO()
+    CODE128(reference, writer=ImageWriter()).write(rv, options={
+        'module_width': 0.13, 'module_height': 4.0, 'quiet_zone': 1.5,
+        'font_size': 0, 'text_distance': 0, 'write_text': False,
+    })
+    rv.seek(0)
+    return HttpResponse(rv.getvalue(), content_type='image/png')
+
+
+@login_required
+def logo_serve(request):
+    """Sert le logo depuis la DB (base64) quand le fichier n'existe pas"""
+    import base64
+    company_settings = CompanySettings.objects.first()
+    if company_settings and company_settings.logo_data:
+        logo_bytes = base64.b64decode(company_settings.logo_data)
+        return HttpResponse(logo_bytes, content_type='image/png')
+    return HttpResponse(status=404)
 
 
 @login_required

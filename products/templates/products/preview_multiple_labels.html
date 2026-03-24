@@ -105,11 +105,9 @@
                                         </div>
                                         
                                         <!-- Code-barres -->
-                                        {% if product.barcode_image %}
                                         <div class="barcode" style="text-align: center; margin-bottom: 1.5mm;">
-                                            <img src="{{ product.barcode_image.url }}" alt="Code-barres" style="max-width: 25mm; height: 6mm; object-fit: contain;">
+                                            <img src="{% url 'barcode_serve' product.reference %}" alt="Code-barres" style="max-width: 25mm; height: 6mm; object-fit: contain;">
                                         </div>
-                                        {% endif %}
                                         
                                         <!-- Téléphones -->
                                         {% if company_settings.phone_number_1 %}
