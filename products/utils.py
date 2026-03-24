@@ -236,8 +236,8 @@ def create_label_pdf(product, company_settings, output_path):
         
         # === LOGO CENTRÉ ===
         if company_settings:
-            logo_width = 20 * mm
-            logo_height = 10 * mm
+            logo_width = 32 * mm
+            logo_height = 16 * mm
             logo_x = x_center - logo_width / 2
             logo_path = company_settings.logo.path if company_settings.logo else ''
             logo_data = getattr(company_settings, 'logo_data', None)
@@ -439,8 +439,8 @@ def _draw_label_pdf(c, product, company_settings, x, y, w, h):
     # Logo (utilise base64 en DB si le fichier n'existe pas)
     has_logo = False
     if company_settings:
-        LOGO_H = 7 * mm
-        LOGO_W = 14 * mm
+        LOGO_H = 11 * mm
+        LOGO_W = 22 * mm
         logo_img = None
         try:
             if company_settings.logo and os.path.exists(company_settings.logo.path):

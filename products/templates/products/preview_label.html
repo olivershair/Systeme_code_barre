@@ -12,9 +12,9 @@
             <div class="card-body">
                 <div class="label-preview text-center" style="padding: 40px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 10px;">
                     <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 450px; margin: 0 auto;">
-                        {% if company_settings and company_settings.logo %}
-                            <div class="mb-3" style="height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                                <img src="{{ company_settings.logo.url }}" alt="Logo" style="max-height: 100px; max-width: 100%; object-fit: contain;">
+                        {% if company_settings and company_settings.logo or company_settings and company_settings.logo_data %}
+                            <div class="mb-3" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                <img src="{% url 'logo_serve' %}" alt="Logo" style="max-height: 140px; max-width: 100%; object-fit: contain;">
                                 <p class="text-muted fst-italic mb-0" style="font-size: 0.7rem; margin-top: 8px;">
                                     Where beauty evokes confidence
                                 </p>
