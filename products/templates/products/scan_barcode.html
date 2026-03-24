@@ -49,40 +49,27 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.20.0/umd/index.min.js"></script>
 <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const context = canvas.getContext('2d');
     const barcodeInput = document.getElementById('barcode_value');
-    
-    // Démarrer la caméra
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        .then(stream => {
-            video.srcObject = stream;
-            video.play();
-            scanBarcode();
-        })
-        .catch(err => {
-            console.error('Erreur caméra:', err);
-            alert('Impossible d\'accéder à la caméra');
-        });
-    
-    function scanBarcode() {
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            canvas.height = video.videoHeight;
-            canvas.width = video.videoWidth;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height);
-            
-            if (code) {
-                barcodeInput.value = code.data;
+    const video = document.getElementById('video');
+
+    const codeReader = new ZXing.BrowserMultiFormatReader();
+
+    codeReader.decodeFromConstraints(
+        { video: { facingMode: 'environment' } },
+        video,
+        (result, error) => {
+            if (result) {
+                barcodeInput.value = result.getText();
+                codeReader.reset();
                 document.getElementById('barcode-form').submit();
             }
         }
-        requestAnimationFrame(scanBarcode);
-    }
+    ).catch(err => {
+        console.error('Erreur caméra:', err);
+        document.querySelector('.alert-info').innerHTML =
+            '<i class="bi bi-exclamation-triangle"></i> Impossible d\'accéder à la caméra. Saisissez la référence manuellement.';
+    });
 </script>
 {% endblock %}
