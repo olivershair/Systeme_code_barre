@@ -2,6 +2,31 @@
 
 {% block title %}Scanner Code-barres{% endblock %}
 
+{% block extra_css %}
+<style>
+    #scanner-container {
+        position: relative;
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+        overflow: hidden;
+        border-radius: 8px;
+        background: #000;
+    }
+    #scanner-container video {
+        width: 100%;
+        display: block;
+    }
+    #scanner-container canvas.drawingBuffer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
@@ -10,33 +35,30 @@
                 <h4 class="mb-0"><i class="bi bi-camera"></i> Scanner un Code-barres</h4>
             </div>
             <div class="card-body">
-                <div id="scanner-container" class="mb-3">
-                    <video id="video" width="100%" autoplay></video>
-                    <canvas id="canvas" style="display:none;"></canvas>
+                <div id="scanner-container" class="mb-3"></div>
+
+                <div id="scanner-status" class="alert alert-info">
+                    <i class="bi bi-camera"></i> Démarrage de la caméra...
                 </div>
-                
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> Positionnez le code-barres devant la caméra
-                </div>
-                
+
                 <form method="post" id="barcode-form">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label for="barcode_value" class="form-label">Ou saisir manuellement:</label>
-                        <input type="text" name="barcode_value" id="barcode_value" class="form-control" 
+                        <label for="barcode_value" class="form-label">Ou saisir manuellement :</label>
+                        <input type="text" name="barcode_value" id="barcode_value" class="form-control"
                                placeholder="Référence du produit">
                     </div>
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-search"></i> Rechercher
                     </button>
                 </form>
-                
+
                 {% if product %}
                 <div class="alert alert-success mt-4">
-                    <h5>Produit trouvé!</h5>
-                    <p><strong>Nom:</strong> {{ product.name }}</p>
-                    <p><strong>Référence:</strong> {{ product.reference }}</p>
-                    <p><strong>Prix:</strong> {{ product.price }} FCFA</p>
+                    <h5>Produit trouvé !</h5>
+                    <p><strong>Nom :</strong> {{ product.name }}</p>
+                    <p><strong>Référence :</strong> {{ product.reference }}</p>
+                    <p><strong>Prix :</strong> {{ product.price }} FCFA</p>
                     <a href="{% url 'preview_label' product.pk %}" class="btn btn-sm btn-info">
                         Voir l'étiquette
                     </a>
@@ -49,27 +71,47 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.20.0/umd/index.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 <script>
-    const barcodeInput = document.getElementById('barcode_value');
-    const video = document.getElementById('video');
+    const statusEl = document.getElementById('scanner-status');
+    let scanning = false;
 
-    const codeReader = new ZXing.BrowserMultiFormatReader();
-
-    codeReader.decodeFromConstraints(
-        { video: { facingMode: 'environment' } },
-        video,
-        (result, error) => {
-            if (result) {
-                barcodeInput.value = result.getText();
-                codeReader.reset();
-                document.getElementById('barcode-form').submit();
+    Quagga.init({
+        inputStream: {
+            type: 'LiveStream',
+            target: document.getElementById('scanner-container'),
+            constraints: {
+                facingMode: 'environment',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
             }
+        },
+        decoder: {
+            readers: ['code_128_reader', 'ean_reader', 'ean_8_reader', 'code_39_reader']
+        },
+        locate: true
+    }, function(err) {
+        if (err) {
+            statusEl.className = 'alert alert-warning';
+            statusEl.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Caméra non disponible. Saisissez la référence manuellement.';
+            return;
         }
-    ).catch(err => {
-        console.error('Erreur caméra:', err);
-        document.querySelector('.alert-info').innerHTML =
-            '<i class="bi bi-exclamation-triangle"></i> Impossible d\'accéder à la caméra. Saisissez la référence manuellement.';
+        Quagga.start();
+        statusEl.className = 'alert alert-success';
+        statusEl.innerHTML = '<i class="bi bi-camera"></i> Caméra active — pointez vers le code-barres';
+    });
+
+    Quagga.onDetected(function(result) {
+        if (scanning) return;
+        const code = result.codeResult.code;
+        if (code && code.length > 0) {
+            scanning = true;
+            Quagga.stop();
+            statusEl.className = 'alert alert-success';
+            statusEl.innerHTML = '<i class="bi bi-check-circle"></i> Code détecté : <strong>' + code + '</strong>';
+            document.getElementById('barcode_value').value = code;
+            document.getElementById('barcode-form').submit();
+        }
     });
 </script>
 {% endblock %}
