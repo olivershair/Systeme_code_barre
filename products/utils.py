@@ -5,7 +5,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
-from reportlab.lib.colors import HexColor, Color
+from reportlab.lib.colors import Color
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 import pandas as pd
@@ -50,8 +50,8 @@ LABEL_CONFIG = {
 
 COLORS = {
     'border': Color(0.7, 0.7, 0.7),
-    'text': HexColor("#C9098C"),       # Violet principal
-    'text_light': HexColor('#C9098C'), # Violet secondaire
+    'text': Color(0, 0, 0),       # Noir
+    'text_light': Color(0, 0, 0), # Noir
     'line': Color(0.8, 0.8, 0.8),
     'background': Color(1, 1, 1)
 }
