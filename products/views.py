@@ -135,6 +135,19 @@ def preview_label(request, pk):
 
 
 @login_required
+def download_label_x21_pdf(request, pk):
+    """Télécharger 21 copies de la même étiquette sur une page A4"""
+    product = get_object_or_404(Product, pk=pk)
+    company_settings = CompanySettings.objects.first()
+    output_path = os.path.join(settings.MEDIA_ROOT, f'label_x21_{product.reference}.pdf')
+    create_multiple_labels_pdf([product] * 21, company_settings, output_path)
+    with open(output_path, 'rb') as pdf:
+        response = HttpResponse(pdf.read(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="etiquette_x21_{product.reference}.pdf"'
+        return response
+
+
+@login_required
 def download_label_pdf(request, pk):
     """Télécharger l'étiquette en PDF"""
     product = get_object_or_404(Product, pk=pk)

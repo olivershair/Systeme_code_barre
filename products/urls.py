@@ -8,6 +8,7 @@ urlpatterns = [
     path('product/<int:pk>/delete/', views.product_delete, name='product_delete'),
     path('product/<int:pk>/preview/', views.preview_label, name='preview_label'),
     path('product/<int:pk>/download-pdf/', views.download_label_pdf, name='download_label_pdf'),
+    path('product/<int:pk>/download-x21-pdf/', views.download_label_x21_pdf, name='download_label_x21_pdf'),
     path('product/<int:pk>/download-image/', views.download_label_image, name='download_label_image'),
     path('import/', views.import_excel, name='import_excel'),
     path('export/', views.export_excel, name='export_excel'),
